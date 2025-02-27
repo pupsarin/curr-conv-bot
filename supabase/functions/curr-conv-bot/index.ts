@@ -25,6 +25,7 @@ const USD = ["usd", "us", "юсд"];
 const UAH = ["uah", "юах", "грн", "гривень"];
 const CAD = ["cad", "кад"];
 const CZK = ["czk", "цзк"];
+const BGN = ["bgn", "лев", "лева", "lev"]
 
 const convertToCurrencyMap = (
   currencyName: string,
@@ -42,6 +43,7 @@ const CURRENCY_MAP = {
   ...convertToCurrencyMap("UAH", UAH),
   ...convertToCurrencyMap("CAD", CAD),
   ...convertToCurrencyMap("CZK", CZK),
+  ...convertToCurrencyMap("BGN", BGN),
 };
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -73,7 +75,7 @@ const getLastCurrencyUpdateDateForBase = async (base) => {
       return new Date();
     }
   } catch (e) {
-    return new Date();
+    throw new Error(`getLastCurrencyUpdateDateForBase:  ${e.message}`)
   }
 };
 
@@ -90,7 +92,7 @@ const getCurrencyExchangeRates = async (base) => {
 
     return currentRates;
   } catch (e) {
-    throw new Error(e.message);
+    throw new Error(`getCurrencyExchangeRates: ${e.message}`);
   }
 };
 
@@ -98,7 +100,7 @@ const SEPARATORS = ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇"];
 
 const fetchRates = async (base) => {
   try {
-    const currencies = ["USD", "CZK", "UAH", "CAD", "EUR"]
+    const currencies = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN"]
       .filter((curr) => curr !== base)
       .join(",");
     const searchParams = new URLSearchParams({
@@ -123,7 +125,7 @@ const fetchRates = async (base) => {
 
     return json;
   } catch (e) {
-    throw new Error(e.message);
+    throw new Error(`fetchRates: ${e.message}`);
   }
 };
 
@@ -145,7 +147,7 @@ const fetchCurrencyExchangeRates = async (
 
     return data.rates;
   } catch (e) {
-    throw new Error(e.message);
+    throw new Error(`fetchCurrencyExchangeRates: ${e.message}`);
   }
 };
 
@@ -166,7 +168,7 @@ bot.on(":text", async (ctx: Context) => {
     if (base) {
       const lastCurrencyUpdateDate =
         await getLastCurrencyUpdateDateForBase(base);
-      let rates;
+      let rates = {};
       if (lessThanXDaysAgo(lastCurrencyUpdateDate)) {
         rates = await getCurrencyExchangeRates(base);
       } else {
@@ -201,7 +203,7 @@ const run = async (req) => {
 
     return await useWebhook(req.clone());
   } catch (e) {
-    console.error(e);
+    throw new Error(`run: ${e.message}`);
   }
 };
 

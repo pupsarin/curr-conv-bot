@@ -39,3 +39,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }} 
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          SECRET: ${{ secrets.SECRET }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          FX_RATES_KEY: ${{ secrets.FX_RATES_KEY }}

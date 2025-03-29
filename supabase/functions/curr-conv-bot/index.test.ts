@@ -41,7 +41,7 @@ Deno.test("should find first valid currency match", () => {
   for (const match of matches!) {
     const currency = match.replace(/[0-9.\s]/g, '').toUpperCase();
     
-    if (currency === "CAD" || currency === "КАД") {
+    if (currency === "CAD") {
       processedMatch = match;
       break;
     }

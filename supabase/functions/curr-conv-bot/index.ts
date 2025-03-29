@@ -17,8 +17,6 @@ const tgToken = Deno.env.get("TG_TOKEN") || "";
 const publicSecret = Deno.env.get("SECRET") || "";
 const fxRatesKey = Deno.env.get("FX_RATES_KEY") || "";
 
-const currencyList = ([] as string[]).concat(EUR, USD, UAH, CAD, CZK, BGN).map(c => c.toUpperCase());
-
 const convertToCurrencyMap = (
   currencyName: string,
   currencyArray: string[],

@@ -145,17 +145,17 @@ const fetchCurrencyExchangeRates = async (
 
 bot.on(":text", async (ctx: Context) => {
   const message = ctx.msg.text;
-  const match = message.match(regex);
+  const matches = message.match(regex);
 
-  if (match) {
-    const amount = parseFloat(match[1]);
-    const currency = match[2].toUpperCase();
+  if (!matches) return;
 
+  for (const match of matches) {
+    const amount = parseFloat(match.replace(/[^0-9.]/g, ''));
+    const currency = match.replace(/[0-9.\s]/g, '').toUpperCase();
     const base = CURRENCY_MAP[currency];
 
     if (base) {
-      const lastCurrencyUpdateDate =
-        await getLastCurrencyUpdateDateForBase(base);
+      const lastCurrencyUpdateDate = await getLastCurrencyUpdateDateForBase(base);
       let rates = {};
       if (lessThanXDaysAgo(lastCurrencyUpdateDate)) {
         rates = await getCurrencyExchangeRates(base);
@@ -175,7 +175,8 @@ bot.on(":text", async (ctx: Context) => {
         "",
       );
 
-      ctx.reply(convertedAmount.slice(0, -3));
+      ctx.reply(`Converting ${match}:\n${convertedAmount.slice(0, -3)}`);
+      break;
     }
   }
 });

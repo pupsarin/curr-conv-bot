@@ -60,3 +60,19 @@ Deno.test("should not match partial currency codes", () => {
   assertEquals(matches![0], "120cad");
 });
 
+Deno.test("should match currency variations", () => {
+  const testCases = [
+    { message: "20 гривен", expected: "20 гривен" },
+    { message: "20 долларів", expected: "20 доллар" },
+    { message: "20 доларів", expected: "20 долар" },
+    { message: "20 евра", expected: "20 евра" },
+    { message: "20 крон", expected: "20 крон" },
+    { message: "20 левів", expected: "20 лев" }
+  ];
+
+  for (const { message, expected } of testCases) {
+    const matches = message.match(regex);
+    assertExists(matches, `Should find matches for ${message}`);
+    assertEquals(matches![0], expected);
+  }
+});

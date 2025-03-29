@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// import cc from "npm:currency-codes@2.1.0";
 import {
   Bot,
   webhookCallback,
@@ -7,10 +6,8 @@ import {
 import { Context } from "https://deno.land/x/grammy@v1.30.0/types.deno.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { EUR, USD, UAH, CAD, CZK, BGN, regex } from "./constants.ts";
 
-// import { Hono } from "jsr:@hono/hono";
-// const functionName = "curr-conv-bot";
-// const app = new Hono().basePath(`/${functionName}`);
 
 const RATES_TABLE = "currency_rates";
 
@@ -20,11 +17,7 @@ const tgToken = Deno.env.get("TG_TOKEN") || "";
 const publicSecret = Deno.env.get("SECRET") || "";
 const fxRatesKey = Deno.env.get("FX_RATES_KEY") || "";
 
-const EUR = ["eur", "euro", "євро", "євр", "еуро"];
-const USD = ["usd", "us", "юсд"];
-const UAH = ["uah", "юах", "грн", "гривень"];
-const CAD = ["cad", "кад"];
-const CZK = ["czk", "цзк"];
+const currencyList = ([] as string[]).concat(EUR, USD, UAH, CAD, CZK, BGN).map(c => c.toUpperCase());
 
 const convertToCurrencyMap = (
   currencyName: string,
@@ -42,6 +35,7 @@ const CURRENCY_MAP = {
   ...convertToCurrencyMap("UAH", UAH),
   ...convertToCurrencyMap("CAD", CAD),
   ...convertToCurrencyMap("CZK", CZK),
+  ...convertToCurrencyMap("BGN", BGN),
 };
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -70,10 +64,10 @@ const getLastCurrencyUpdateDateForBase = async (base) => {
     if (lastDate) {
       return new Date(lastDate.created_at);
     } else {
-      return new Date();
+      return new Date(0);
     }
   } catch (e) {
-    return new Date();
+    throw new Error(`getLastCurrencyUpdateDateForBase:  ${e.message}`)
   }
 };
 
@@ -86,11 +80,11 @@ const getCurrencyExchangeRates = async (base) => {
       .order("created_at", { ascending: false })
       .limit(1);
 
-    const currentRates = allRates[0].rates;
+    const currentRates = allRates?.[0]?.rates;
 
     return currentRates;
   } catch (e) {
-    throw new Error(e.message);
+    throw new Error(`getCurrencyExchangeRates: ${e.message}`);
   }
 };
 
@@ -98,7 +92,7 @@ const SEPARATORS = ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇"];
 
 const fetchRates = async (base) => {
   try {
-    const currencies = ["USD", "CZK", "UAH", "CAD", "EUR"]
+    const currencies = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN"]
       .filter((curr) => curr !== base)
       .join(",");
     const searchParams = new URLSearchParams({
@@ -123,7 +117,7 @@ const fetchRates = async (base) => {
 
     return json;
   } catch (e) {
-    throw new Error(e.message);
+    throw new Error(`fetchRates: ${e.message}`);
   }
 };
 
@@ -145,28 +139,24 @@ const fetchCurrencyExchangeRates = async (
 
     return data.rates;
   } catch (e) {
-    throw new Error(e.message);
+    throw new Error(`fetchCurrencyExchangeRates: ${e.message}`);
   }
 };
 
 bot.on(":text", async (ctx: Context) => {
-  const normalizedMessage = ctx.msg.text
-    .toUpperCase()
-    .replace(/[^\w.,\u0400-\u04FF]+/g, "")
-    .replace(/,/g, ".");
+  const message = ctx.msg.text;
+  const matches = message.match(regex);
 
-  const match = normalizedMessage.match(/^([\d.]+)([A-Z\u0400-\u04FF]+)$/);
+  if (!matches) return;
 
-  if (match) {
-    const amount = parseFloat(match[1]);
-    const currency = match[2];
-
+  for (const match of matches) {
+    const amount = parseFloat(match.replace(/[^0-9.]/g, ''));
+    const currency = match.replace(/[0-9.\s]/g, '').toUpperCase();
     const base = CURRENCY_MAP[currency];
 
     if (base) {
-      const lastCurrencyUpdateDate =
-        await getLastCurrencyUpdateDateForBase(base);
-      let rates;
+      const lastCurrencyUpdateDate = await getLastCurrencyUpdateDateForBase(base);
+      let rates = {};
       if (lessThanXDaysAgo(lastCurrencyUpdateDate)) {
         rates = await getCurrencyExchangeRates(base);
       } else {
@@ -185,7 +175,8 @@ bot.on(":text", async (ctx: Context) => {
         "",
       );
 
-      ctx.reply(convertedAmount.slice(0, -3));
+      ctx.reply(`Converting ${match}:\n${convertedAmount.slice(0, -3)}`);
+      break;
     }
   }
 });
@@ -201,7 +192,7 @@ const run = async (req) => {
 
     return await useWebhook(req.clone());
   } catch (e) {
-    console.error(e);
+    return new Response(`run: ${e.message}`, { status: 500 });
   }
 };
 

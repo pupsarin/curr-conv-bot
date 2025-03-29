@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// import cc from "npm:currency-codes@2.1.0";
 import {
   Bot,
   webhookCallback,
@@ -7,10 +6,8 @@ import {
 import { Context } from "https://deno.land/x/grammy@v1.30.0/types.deno.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { EUR, USD, UAH, CAD, CZK, BGN, regex } from "./constants.ts";
 
-// import { Hono } from "jsr:@hono/hono";
-// const functionName = "curr-conv-bot";
-// const app = new Hono().basePath(`/${functionName}`);
 
 const RATES_TABLE = "currency_rates";
 
@@ -20,12 +17,7 @@ const tgToken = Deno.env.get("TG_TOKEN") || "";
 const publicSecret = Deno.env.get("SECRET") || "";
 const fxRatesKey = Deno.env.get("FX_RATES_KEY") || "";
 
-const EUR = ["eur", "euro", "євро", "євр", "еуро"];
-const USD = ["usd", "us", "юсд"];
-const UAH = ["uah", "юах", "грн", "гривень"];
-const CAD = ["cad", "кад"];
-const CZK = ["czk", "цзк"];
-const BGN = ["bgn", "лев", "лева", "lev"]
+const currencyList = ([] as string[]).concat(EUR, USD, UAH, CAD, CZK, BGN).map(c => c.toUpperCase());
 
 const convertToCurrencyMap = (
   currencyName: string,
@@ -72,7 +64,7 @@ const getLastCurrencyUpdateDateForBase = async (base) => {
     if (lastDate) {
       return new Date(lastDate.created_at);
     } else {
-      return new Date();
+      return new Date(0);
     }
   } catch (e) {
     throw new Error(`getLastCurrencyUpdateDateForBase:  ${e.message}`)
@@ -88,7 +80,7 @@ const getCurrencyExchangeRates = async (base) => {
       .order("created_at", { ascending: false })
       .limit(1);
 
-    const currentRates = allRates[0].rates;
+    const currentRates = allRates?.[0]?.rates;
 
     return currentRates;
   } catch (e) {
@@ -152,16 +144,12 @@ const fetchCurrencyExchangeRates = async (
 };
 
 bot.on(":text", async (ctx: Context) => {
-  const normalizedMessage = ctx.msg.text
-    .toUpperCase()
-    .replace(/[^\w.,\u0400-\u04FF]+/g, "")
-    .replace(/,/g, ".");
-
-  const match = normalizedMessage.match(/^([\d.]+)([A-Z\u0400-\u04FF]+)$/);
+  const message = ctx.msg.text;
+  const match = message.match(regex);
 
   if (match) {
     const amount = parseFloat(match[1]);
-    const currency = match[2];
+    const currency = match[2].toUpperCase();
 
     const base = CURRENCY_MAP[currency];
 
@@ -203,7 +191,7 @@ const run = async (req) => {
 
     return await useWebhook(req.clone());
   } catch (e) {
-    throw new Error(`run: ${e.message}`);
+    return new Response(`run: ${e.message}`, { status: 500 });
   }
 };
 

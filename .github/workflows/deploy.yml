@@ -1,0 +1,39 @@
+name: Deploy to Supabase
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ['release-*']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+          
+      - name: Run tests
+        run: deno test supabase/functions/curr-conv-bot/index.test.ts
+
+  deploy:
+    needs: test
+    if: startsWith(github.ref, 'refs/heads/release-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+          
+      - name: Deploy Edge Functions
+        run: supabase functions deploy curr-conv-bot
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }} 

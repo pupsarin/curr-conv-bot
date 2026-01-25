@@ -3,7 +3,7 @@ import { Bot, webhookCallback } from "https://deno.land/x/grammy@v1.30.0/mod.ts"
 import { Context } from "https://deno.land/x/grammy@v1.30.0/types.deno.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { EUR, USD, UAH, CAD, CZK, BGN, GBP, regex } from "./constants.ts";
+import { EUR, USD, UAH, CAD, CZK, BGN, GBP, regex, SUPPORTED_CURRENCIES } from "./constants.ts";
 
 const RATES_TABLE = "currency_rates";
 
@@ -34,6 +34,16 @@ const CURRENCY_MAP = {
 };
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+const CURRENCY_FLAGS: Record<string, string> = {
+  USD: "🇺🇸",
+  CZK: "🇨🇿",
+  UAH: "🇺🇦",
+  CAD: "🇨🇦",
+  EUR: "🇪🇺",
+  BGN: "🇧🇬",
+  GBP: "🇬🇧",
+};
 
 const bot = new Bot(tgToken);
 
@@ -83,11 +93,10 @@ const getCurrencyExchangeRates = async (base) => {
   }
 };
 
-const SEPARATORS = ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇"];
 
 const fetchRates = async (base) => {
   try {
-    const currencies = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN", "GBP"]
+    const currencies = SUPPORTED_CURRENCIES
       .filter((curr) => curr !== base)
       .join(",");
     const searchParams = new URLSearchParams({
@@ -161,19 +170,27 @@ bot.on(":text", async (ctx: Context) => {
         rates = await fetchCurrencyExchangeRates(base, userId);
       }
 
-      const convertedAmount = Object.entries(rates)
-        .reduce(
-          (acc, [curr, rate], index) => {
-            acc += `${(amount * rate).toLocaleString(undefined, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })} ${curr} ${SEPARATORS[index]} `;
-            return acc;
-          },
-          "",
-        );
+      const entries = Object.entries(rates)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([curr, rate]) => {
+        const value = (amount * rate).toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        });
+        const flag = CURRENCY_FLAGS[curr] || "";
+        return `${flag} ${value} ${curr}`;
+      });
 
-      ctx.reply(`Converting ${match}:\n${convertedAmount.slice(0, -3)}`);
+      const rows: string[] = [];
+      for (let i = 0; i < entries.length; i += 2) {
+        if (entries[i + 1]) {
+          rows.push(`${entries[i]}  |  ${entries[i + 1]}`);
+        } else {
+          rows.push(entries[i]);
+        }
+      }
+
+      ctx.reply(`Converting ${match}:\n${rows.join("\n")}`);
       break;
     }
   }

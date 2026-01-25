@@ -6,5 +6,7 @@ export const CZK = ["czk", "цзк", "крона", "крон", "крони"];
 export const BGN = ["bgn", "лев", "лева", "lev", "левы", "левів", "левов"];
 export const GBP = ["gbp", "pound", "pounds", "фунт", "фунтов", "фунти", "фунтів", "£"];
 
+export const SUPPORTED_CURRENCIES = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN", "GBP"];
+
 export const currencyList = ([] as string[]).concat(EUR, USD, UAH, CAD, CZK, BGN, GBP).map(c => c.toUpperCase());
 export const regex = new RegExp(`(?<!\\d\\s)(\\d{1,3}(?:[\\s,]\\d{3})*(?:\\.\\d+)?)\\s*(${currencyList.join("|")})(?![a-zA-Zа-яА-ЯіїєґІЇЄҐ])`, 'gi'); 

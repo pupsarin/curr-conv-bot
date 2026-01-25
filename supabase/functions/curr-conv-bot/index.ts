@@ -4,6 +4,7 @@ import { Context } from "https://deno.land/x/grammy@v1.30.0/types.deno.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { regex, SUPPORTED_CURRENCIES, CURRENCY_MAP } from "./constants.ts";
+import { getTranslation } from "./utils.ts";
 
 const RATES_TABLE = "currency_rates";
 
@@ -135,6 +136,8 @@ bot.on(":text", async (ctx: Context) => {
   const userId = ctx.from?.id;
   if (!userId) return;
 
+  const t = getTranslation(ctx.from?.language_code);
+
   for (const match of matches) {
     const amount = parseFloat(match.replace(/[^0-9.]/g, ''));
     const currency = match.replace(/[0-9.\s]/g, '').toUpperCase();
@@ -170,7 +173,7 @@ bot.on(":text", async (ctx: Context) => {
         }
       }
 
-      ctx.reply(`Converting ${match}:\n${rows.join("\n")}`);
+      ctx.reply(`${t.converting} ${match}:\n${rows.join("\n")}`);
       break;
     }
   }

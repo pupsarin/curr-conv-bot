@@ -20,4 +20,17 @@ export const CURRENCY_MAP: Record<string, string> = Object.entries(CURRENCY_ALIA
 );
 
 const currencyList = Object.values(CURRENCY_ALIASES).flat().map(c => c.toUpperCase());
-export const regex = new RegExp(`(?<!\\d\\s)(\\d{1,3}(?:[\\s,]\\d{3})*(?:\\.\\d+)?)\\s*(${currencyList.join("|")})(?![a-zA-Zа-яА-ЯіїєґІЇЄҐ])`, 'gi'); 
+export const regex = new RegExp(`(?<!\\d\\s)(\\d{1,3}(?:[\\s,]\\d{3})*(?:\\.\\d+)?)\\s*(${currencyList.join("|")})(?![a-zA-Zа-яА-ЯіїєґІЇЄҐ])`, 'gi');
+
+export const TRANSLATIONS: Record<string, { converting: string }> = {
+  en: { converting: "Converting" },
+  uk: { converting: "Конвертую" },
+  ru: { converting: "Конвертую" },
+  cs: { converting: "Převádím" },
+  de: { converting: "Umrechnung" },
+  fr: { converting: "Conversion" },
+  es: { converting: "Convirtiendo" },
+  pl: { converting: "Konwertuję" },
+};
+
+ 

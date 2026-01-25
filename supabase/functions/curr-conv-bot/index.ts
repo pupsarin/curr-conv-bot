@@ -150,6 +150,7 @@ bot.on(":text", async (ctx: Context) => {
       }
 
       const entries = Object.entries(rates)
+        .filter(([curr]) => SUPPORTED_CURRENCIES.includes(curr))
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([curr, rate]) => {
         const value = (amount * rate).toLocaleString(undefined, {

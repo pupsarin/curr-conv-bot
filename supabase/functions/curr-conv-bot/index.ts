@@ -3,7 +3,7 @@ import { Bot, webhookCallback } from "https://deno.land/x/grammy@v1.30.0/mod.ts"
 import { Context } from "https://deno.land/x/grammy@v1.30.0/types.deno.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { EUR, USD, UAH, CAD, CZK, BGN, GBP, regex, SUPPORTED_CURRENCIES } from "./constants.ts";
+import { regex, SUPPORTED_CURRENCIES, CURRENCY_MAP } from "./constants.ts";
 
 const RATES_TABLE = "currency_rates";
 
@@ -13,26 +13,6 @@ const tgToken = Deno.env.get("TG_TOKEN") || "";
 const publicSecret = Deno.env.get("SECRET") || "";
 const fxRatesKey = Deno.env.get("FX_RATES_KEY") || "";
 
-const convertToCurrencyMap = (
-  currencyName: string,
-  currencyArray: string[],
-) => {
-  return currencyArray.reduce((acc, curr) => {
-    acc[curr.toUpperCase()] = currencyName;
-    return acc;
-  }, {});
-};
-
-const CURRENCY_MAP = {
-  ...convertToCurrencyMap("EUR", EUR),
-  ...convertToCurrencyMap("USD", USD),
-  ...convertToCurrencyMap("UAH", UAH),
-  ...convertToCurrencyMap("CAD", CAD),
-  ...convertToCurrencyMap("CZK", CZK),
-  ...convertToCurrencyMap("BGN", BGN),
-  ...convertToCurrencyMap("GBP", GBP),
-};
-
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const CURRENCY_FLAGS: Record<string, string> = {
@@ -41,7 +21,6 @@ const CURRENCY_FLAGS: Record<string, string> = {
   UAH: "🇺🇦",
   CAD: "🇨🇦",
   EUR: "🇪🇺",
-  BGN: "🇧🇬",
   GBP: "🇬🇧",
 };
 

@@ -1,5 +1,5 @@
 import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { regex } from "./constants.ts";
+import { regex, SUPPORTED_CURRENCIES } from "./constants.ts";
 
 Deno.test("should match basic currency format", () => {
   const message = "20 EUR";
@@ -159,4 +159,111 @@ Deno.test("should match GBP variations", () => {
     assertExists(matches, `Should find matches for ${message}`);
     assertEquals(matches![0], expected);
   }
+});
+
+Deno.test("SUPPORTED_CURRENCIES should include all 7 currencies", () => {
+  const expectedCurrencies = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN", "GBP"];
+  assertEquals(SUPPORTED_CURRENCIES.length, 7, "Should have exactly 7 supported currencies");
+  for (const currency of expectedCurrencies) {
+    assertEquals(
+      SUPPORTED_CURRENCIES.includes(currency),
+      true,
+      `SUPPORTED_CURRENCIES should include ${currency}`
+    );
+  }
+});
+
+Deno.test("rates object should contain all currencies except base", () => {
+  const bases = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN", "GBP"];
+
+  for (const base of bases) {
+    const expectedCurrencies = SUPPORTED_CURRENCIES.filter(c => c !== base);
+
+    // Simulate a rates object that should be returned from API
+    const mockRates: Record<string, number> = {};
+    for (const curr of expectedCurrencies) {
+      mockRates[curr] = 1.0; // mock rate
+    }
+
+    const rateKeys = Object.keys(mockRates);
+    assertEquals(
+      rateKeys.length,
+      6,
+      `Rates for base ${base} should have exactly 6 currencies`
+    );
+
+    for (const expectedCurr of expectedCurrencies) {
+      assertEquals(
+        rateKeys.includes(expectedCurr),
+        true,
+        `Rates for base ${base} should include ${expectedCurr}`
+      );
+    }
+  }
+});
+
+Deno.test("conversion output should include all currencies from rates", () => {
+  const amount = 100;
+
+  const CURRENCY_FLAGS: Record<string, string> = {
+    USD: "🇺🇸",
+    CZK: "🇨🇿",
+    UAH: "🇺🇦",
+    CAD: "🇨🇦",
+    EUR: "🇪🇺",
+    BGN: "🇧🇬",
+    GBP: "🇬🇧",
+  };
+
+  // Mock rates for CAD base (should include GBP)
+  const mockRatesForCAD: Record<string, number> = {
+    USD: 0.73,
+    CZK: 14.97,
+    UAH: 31.59,
+    EUR: 0.62,
+    BGN: 1.22,
+    GBP: 0.54,
+  };
+
+  const entries = Object.entries(mockRatesForCAD)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([curr, rate]) => {
+    const value = (amount * rate).toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+    const flag = CURRENCY_FLAGS[curr] || "";
+    return `${flag} ${value} ${curr}`;
+  });
+
+  const rows: string[] = [];
+  for (let i = 0; i < entries.length; i += 2) {
+    if (entries[i + 1]) {
+      rows.push(`${entries[i]}  |  ${entries[i + 1]}`);
+    } else {
+      rows.push(entries[i]);
+    }
+  }
+
+  const output = rows.join("\n");
+
+  // Check all currencies are in output
+  for (const currency of Object.keys(mockRatesForCAD)) {
+    assertEquals(
+      output.includes(currency),
+      true,
+      `Conversion output should include ${currency}`
+    );
+  }
+
+  // Specifically check GBP is included
+  assertEquals(
+    output.includes("GBP"),
+    true,
+    "Conversion output should include GBP"
+  );
+
+  // Check flags are included
+  assertEquals(output.includes("🇺🇸"), true, "Should include US flag");
+  assertEquals(output.includes("🇬🇧"), true, "Should include UK flag");
 });

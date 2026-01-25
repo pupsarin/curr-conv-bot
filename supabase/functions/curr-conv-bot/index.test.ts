@@ -67,7 +67,7 @@ Deno.test("should match currency variations", () => {
     { message: "20 долар", expected: "20 долар" },
     { message: "20 евра", expected: "20 евра" },
     { message: "20 крон", expected: "20 крон" },
-    { message: "20 лев", expected: "20 лев" }
+    { message: "20 pounds", expected: "20 pounds" }
   ];
 
   for (const { message, expected } of testCases) {
@@ -161,9 +161,9 @@ Deno.test("should match GBP variations", () => {
   }
 });
 
-Deno.test("SUPPORTED_CURRENCIES should include all 7 currencies", () => {
-  const expectedCurrencies = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN", "GBP"];
-  assertEquals(SUPPORTED_CURRENCIES.length, 7, "Should have exactly 7 supported currencies");
+Deno.test("SUPPORTED_CURRENCIES should include all 6 currencies", () => {
+  const expectedCurrencies = ["USD", "CZK", "UAH", "CAD", "EUR", "GBP"];
+  assertEquals(SUPPORTED_CURRENCIES.length, 6, "Should have exactly 6 supported currencies");
   for (const currency of expectedCurrencies) {
     assertEquals(
       SUPPORTED_CURRENCIES.includes(currency),
@@ -174,7 +174,7 @@ Deno.test("SUPPORTED_CURRENCIES should include all 7 currencies", () => {
 });
 
 Deno.test("rates object should contain all currencies except base", () => {
-  const bases = ["USD", "CZK", "UAH", "CAD", "EUR", "BGN", "GBP"];
+  const bases = ["USD", "CZK", "UAH", "CAD", "EUR", "GBP"];
 
   for (const base of bases) {
     const expectedCurrencies = SUPPORTED_CURRENCIES.filter(c => c !== base);
@@ -188,8 +188,8 @@ Deno.test("rates object should contain all currencies except base", () => {
     const rateKeys = Object.keys(mockRates);
     assertEquals(
       rateKeys.length,
-      6,
-      `Rates for base ${base} should have exactly 6 currencies`
+      5,
+      `Rates for base ${base} should have exactly 5 currencies`
     );
 
     for (const expectedCurr of expectedCurrencies) {
@@ -211,7 +211,6 @@ Deno.test("conversion output should include all currencies from rates", () => {
     UAH: "🇺🇦",
     CAD: "🇨🇦",
     EUR: "🇪🇺",
-    BGN: "🇧🇬",
     GBP: "🇬🇧",
   };
 
@@ -221,7 +220,6 @@ Deno.test("conversion output should include all currencies from rates", () => {
     CZK: 14.97,
     UAH: 31.59,
     EUR: 0.62,
-    BGN: 1.22,
     GBP: 0.54,
   };
 

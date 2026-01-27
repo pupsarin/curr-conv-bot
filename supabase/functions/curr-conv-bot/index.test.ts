@@ -62,10 +62,10 @@ Deno.test("should not match partial currency codes", () => {
 
 Deno.test("should match currency variations", () => {
   const testCases = [
-    { message: "20 гривен", expected: "20 гривен" },
-    { message: "20 доллар", expected: "20 доллар" },
+    { message: "20 гривень", expected: "20 гривень" },
     { message: "20 долар", expected: "20 долар" },
-    { message: "20 евра", expected: "20 евра" },
+    { message: "20 доларів", expected: "20 доларів" },
+    { message: "20 євро", expected: "20 євро" },
     { message: "20 крон", expected: "20 крон" },
     { message: "20 pounds", expected: "20 pounds" }
   ];
@@ -126,7 +126,7 @@ Deno.test("should not match currency followed by Ukrainian letters", () => {
 
 Deno.test("should match space-separated thousands", () => {
   const testCases = [
-    { message: "100 000 долларов", expected: "100 000 долларов" },
+    { message: "100 000 доларів", expected: "100 000 доларів" },
     { message: "1 000 EUR", expected: "1 000 EUR" },
     { message: "10 000 000 грн", expected: "10 000 000 грн" },
   ];
@@ -138,12 +138,28 @@ Deno.test("should match space-separated thousands", () => {
   }
 });
 
+Deno.test("should match plain numbers with more than 3 digits", () => {
+  const testCases = [
+    { message: "50000czk", expected: "50000czk" },
+    { message: "1000 EUR", expected: "1000 EUR" },
+    { message: "12345usd", expected: "12345usd" },
+    { message: "999999 грн", expected: "999999 грн" },
+    { message: "10000.50 eur", expected: "10000.50 eur" },
+  ];
+
+  for (const { message, expected } of testCases) {
+    const matches = message.match(regex);
+    assertExists(matches, `Should find matches for ${message}`);
+    assertEquals(matches![0], expected);
+  }
+});
+
 Deno.test("should not match partial number from space-separated thousands", () => {
-  const message = "от 100 000 долларов";
+  const message = "від 100 000 доларів";
   const matches = message.match(regex);
   assertExists(matches, "Should find matches");
-  assertEquals(matches![0], "100 000 долларов");
-  assertEquals(matches!.length, 1, "Should only match once, not '000 долларов'");
+  assertEquals(matches![0], "100 000 доларів");
+  assertEquals(matches!.length, 1, "Should only match once, not '000 доларів'");
 });
 
 Deno.test("should match GBP variations", () => {
